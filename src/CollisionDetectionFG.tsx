@@ -4,7 +4,8 @@ import * as d3 from "d3-force";
 const CollisionDetectionFG = () => {
   const fgRef = useRef();
 
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [graphData, setGraphData] = useState<any>({ nodes: [], links: [] });
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,7 +36,9 @@ const CollisionDetectionFG = () => {
 
     // Generate nodes
     const N = 80;
-    const nodes = [...Array(N).keys()].map(() => ({
+    const nodes: { vx: number; vy: number; x: number; y: number }[] = [
+      ...Array(N).keys()
+    ].map(() => ({
       // Initial velocity in random direction
       vx: Math.random() * 2 - 1,
       vy: Math.random() * 2 - 1,
