@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import getData from "./data/index";
 // import SmallData from "./data/miserables.json";
 import { GraphLink, GraphNode, MasterJSON } from "types";
-import * as d3 from "d3-force";
 
 const NODE_R = 4;
 function App() {
@@ -105,10 +104,7 @@ function App() {
     setHighlightNodes(newHighlightNodes);
   };
 
-  const handleClick = (
-    node: NodeObject<NodeObject<GraphNode>> | null,
-    event: MouseEvent
-  ) => {
+  const handleClick = (node: NodeObject<NodeObject<GraphNode>> | null) => {
     if (!node) return;
 
     const newHighlightLinks = new Set();
@@ -122,7 +118,8 @@ function App() {
     setHighlightNodes(newHighlightNodes);
 
     // Center/zoom on node
-    const fg = fgRef.current;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fg = fgRef.current as any;
     if (fg) {
       fg.centerAt(node.x, node.y, 1000);
       fg.zoom(2, 2000);
@@ -218,7 +215,11 @@ function App() {
           autoPauseRedraw={false}
           nodeLabel={(node) => "Wallet n° " + node.id}
           linkLabel={(link) => {
-            return `${link.source.id} sent ${link.value}ETH to ${link.target.id} on ${link.date}`;
+            return `${
+              typeof link.source === "string" ? link.source : link.source.id
+            } sent ${link.value}ETH to ${
+              typeof link.target === "string" ? link.target : link.target.id
+            } on ${link.date}`;
           }}
           linkWidth={(link) => (highlightLinks.has(link) ? 5 : 1)}
           linkDirectionalParticles={4}
@@ -233,17 +234,17 @@ function App() {
           onLinkHover={handleLinkHover}
           d3VelocityDecay={0.01}
           onNodeClick={handleClick}
-          d3Force={(graphData) => {
-            return d3
-              .forceSimulation(graphData.nodes)
-              .force(
-                "link",
-                d3.forceLink(graphData.links).id((d) => d.id)
-              )
-              .force("charge", d3.forceManyBody().strength(-300))
-              .force("center", d3.forceCenter(0, 0))
-              .force("collide", d3.forceCollide(NODE_R * 2));
-          }}
+          // d3Force={(graphData) => {
+          //   return d3
+          //     .forceSimulation(graphData.nodes)
+          //     .force(
+          //       "link",
+          //       d3.forceLink(graphData.links).id((d) => d.id)
+          //     )
+          //     .force("charge", d3.forceManyBody().strength(-300))
+          //     .force("center", d3.forceCenter(0, 0))
+          //     .force("collide", d3.forceCollide(NODE_R * 2));
+          // }}
           onNodeDragEnd={(node) => {
             node.fx = node.x;
             node.fy = node.y;

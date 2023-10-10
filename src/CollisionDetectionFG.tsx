@@ -7,7 +7,8 @@ const CollisionDetectionFG = () => {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
   useEffect(() => {
-    const fg = fgRef.current;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fg = fgRef.current as any;
 
     // Deactivate existing forces
     fg.d3Force("center", null);
@@ -37,7 +38,9 @@ const CollisionDetectionFG = () => {
     const nodes = [...Array(N).keys()].map(() => ({
       // Initial velocity in random direction
       vx: Math.random() * 2 - 1,
-      vy: Math.random() * 2 - 1
+      vy: Math.random() * 2 - 1,
+      x: 0,
+      y: 0
     }));
 
     setGraphData({ nodes, links: [] });

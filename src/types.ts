@@ -20,8 +20,8 @@ export interface GraphNode {
 }
 
 export interface GraphLink {
-  source: string;
-  target: string;
+  source: string | GraphNode;
+  target: string | GraphNode;
   value: number;
   date: string;
   transaction: Transaction;
