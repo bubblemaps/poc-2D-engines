@@ -15,11 +15,16 @@ export interface GraphNode {
   id: string;
   name: string;
   val: number;
+  neighbours: string[];
+  links: GraphLink[];
 }
 
 export interface GraphLink {
   source: string;
   target: string;
+  value: number;
+  date: string;
+  transaction: Transaction;
 }
 
 export interface MasterJSON {

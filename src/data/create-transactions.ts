@@ -51,11 +51,5 @@ export default async function createTransactions(n = 10, wallets: Wallet[]) {
     }
   });
 
-  console.log(
-    "Transactions generated",
-    transactionHistory[0],
-    "size: ",
-    transactionHistory.length
-  );
   return transactionHistory;
 }

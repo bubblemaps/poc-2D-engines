@@ -36,6 +36,5 @@ export default async function createWallets(n: number) {
     creation_date: creationDates[i]
   }));
 
-  console.log("Wallets generated", wallets[0], "size: ", wallets.length);
   return wallets;
 }
