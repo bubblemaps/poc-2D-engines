@@ -23,6 +23,7 @@ function getWalletLinks(walledId: string, transactions: Transaction[]) {
   transactions.forEach((transaction) => {
     if (transaction.sender === walledId || transaction.receiver === walledId) {
       links.push({
+        id: transaction.id,
         source: transaction.sender,
         target: transaction.receiver,
         value: transaction.amount,
@@ -49,6 +50,7 @@ export default async function createMaster(
 
   // Create links (transactions)
   const links: GraphLink[] = transactions.map((transaction) => ({
+    id: transaction.id,
     source: transaction.sender,
     target: transaction.receiver,
     value: transaction.amount,

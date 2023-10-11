@@ -1,5 +1,7 @@
 import { Wallet, Transaction } from "types";
 import { faker } from "@faker-js/faker";
+import { v4 as uuidv4 } from "uuid";
+
 // Function to get a random receiver wallet (excluding the sender)
 function getRandomReceiver(wallets: Wallet[], senderId: string): Wallet {
   const receiver = wallets[Math.floor(Math.random() * wallets.length)];
@@ -40,6 +42,7 @@ export default async function createTransactions(n = 10, wallets: Wallet[]) {
 
       // Create the transaction object
       const transaction: Transaction = {
+        id: uuidv4(),
         sender: senderWallet.id,
         receiver: receiverWallet.id,
         amount: amount,

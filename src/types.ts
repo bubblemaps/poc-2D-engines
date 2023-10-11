@@ -5,6 +5,7 @@ export interface Wallet {
 }
 
 export interface Transaction {
+  id: string;
   sender: string;
   receiver: string;
   amount: number;
@@ -20,6 +21,7 @@ export interface GraphNode {
 }
 
 export interface GraphLink {
+  id: string;
   source: string | GraphNode;
   target: string | GraphNode;
   value: number;
