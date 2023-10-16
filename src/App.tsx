@@ -1,12 +1,18 @@
-import ForceGraph2D, { NodeObject, LinkObject } from "react-force-graph-2d";
+import ForceGraph2D, {
+  NodeObject,
+  LinkObject,
+  ForceGraphMethods
+} from "react-force-graph-2d";
 import { useCallback, useEffect, useRef, useState } from "react";
 import getData from "./data/index";
 // import SmallData from "./data/miserables.json";
 import { GraphLink, GraphNode, MasterJSON } from "types";
+import * as d3 from "d3-force";
 
-const NODE_R = 6;
+const getRadius = (v: number) => Math.ceil(Math.sqrt(v * NODE_R * NODE_R));
+const NODE_R = 4;
 function App() {
-  const [nbWallets, setNbWallets] = useState(500);
+  const [nbWallets, setNbWallets] = useState(1000);
   const [nbTransactions, setNbTransactions] = useState(5);
   const [data, setData] = useState<MasterJSON>();
 
@@ -15,7 +21,15 @@ function App() {
   const [hoverNode, setHoverNode] = useState<NodeObject<GraphNode>>();
   const [selectedNode, setSelectedNode] = useState<NodeObject<GraphNode>>();
 
-  const fgRef = useRef();
+  const fgRef = useRef<
+    | ForceGraphMethods<NodeObject<GraphNode>, LinkObject<GraphNode, GraphLink>>
+    | undefined
+  >();
+
+  const center_coords = {
+    x: window.innerWidth / 2 - 500,
+    y: window.innerHeight / 2 - 800
+  };
 
   useEffect(
     () => {
@@ -29,37 +43,43 @@ function App() {
     []
   );
 
-  // useEffect(() => {
-  //   const fg = fgRef.current;
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fg = fgRef.current;
 
-  //   if (!data || !fg) return;
+    if (!fg || !data) return;
+    // Deactivate existing forces
+    fg.d3Force("center", null);
+    fg.d3Force("charge", null);
+    fg.d3Force("link", null);
 
-  //   // Deactivate existing forces
-  //   fg.d3Force("center", null);
-  //   fg.d3Force("charge", null);
-
-  //   // Add collision and bounding box forces
-  //   fg.d3Force("collide", d3.forceCollide(NODE_R * 2));
-  //   //   fg.d3Force(
-  //   //     "center",
-  //   //     d3
-  //   //       .forceCenter(this.center_coords.x, this.center_coords.y)
-  //   //       .strength(0.03)
-  //   //   )
-  //   //   .force(
-  //   //     "radial",
-  //   //     d3
-  //   //       .forceRadial(
-  //   //         function radius(d) {
-  //   //           return get_node_default_r_coord(d);
-  //   //         },
-  //   //         this.center_coords.x,
-  //   //         this.center_coords.y
-  //   //       )
-  //   //       .strength(0.005)
-  //   //   )
-  //   //   .force("link", d3.forceLink(this.graph.links).distance(50).strength(0.5));
-  // }, [data]);
+    // Add collision and bounding box forces
+    // fg.d3Force(
+    //   "radial",
+    //   d3.forceRadial(1000, center_coords.x, center_coords.y).strength(0.02)
+    // );
+    fg.d3Force("charge", d3.forceManyBody().strength(-5).distanceMax(120));
+    fg.d3Force(
+      "center",
+      d3.forceCenter(center_coords.x, center_coords.y).strength(0.01)
+    );
+    fg.d3Force(
+      "collide",
+      d3.forceCollide((d) => {
+        const nodeRadius = Math.sqrt(d.val * NODE_R * NODE_R);
+        return 1 + nodeRadius;
+      })
+    );
+    fg.d3Force(
+      "link",
+      d3
+        .forceLink()
+        .distance((d) => {
+          return getRadius(d.source.val) + getRadius(d.target.val) + 100;
+        })
+        .strength(0.5)
+    );
+  }, [data]);
 
   const updateData = async () => {
     const newData = await getData(nbWallets, nbTransactions);
@@ -84,8 +104,6 @@ function App() {
 
     setHighlightLinks(newHighlightLinks);
     setHighlightNodes(newHighlightNodes);
-
-    console.log("node", node);
   };
 
   const handleLinkHover = (
@@ -136,7 +154,7 @@ function App() {
 
     // Center/zoom on node
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fg = fgRef.current as any;
+    const fg = fgRef.current;
     if (fg) {
       fg.centerAt(node.x, node.y, 1000);
       fg.zoom(2, 2000);
@@ -152,17 +170,17 @@ function App() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: NodeObject<GraphNode> | null, ctx: any) => {
       if (!node) return;
-      const nodeRadius = Math.sqrt(node.val * NODE_R * NODE_R);
+      const nodeRadius = getRadius(node.val);
       ctx.beginPath();
       ctx.arc(node.x, node.y, 3 + nodeRadius, 0, 2 * Math.PI, false);
       ctx.fillStyle =
         hoverNode === node
-          ? "red"
+          ? "rgba(255, 153, 200, 0.8)"
           : highlightNodes.has(node.id)
-          ? "orange"
+          ? "rgba(252, 246, 189, 0.8)"
           : selectedNode === node
-          ? "green"
-          : "blue";
+          ? "rgba(208, 244, 222, 0.8)"
+          : "rgba(169, 222, 249, 0.8)";
       ctx.fill();
     },
     [hoverNode, highlightNodes, selectedNode]
@@ -171,10 +189,10 @@ function App() {
   return (
     <div
       style={{
-        padding: "20px",
+        paddingTop: "20px",
+        paddingBottom: "20px",
         height: window.innerHeight,
-        width: window.innerWidth,
-        overflow: "hidden"
+        width: window.innerWidth
       }}
     >
       <div
@@ -237,13 +255,14 @@ function App() {
       </div>
 
       {data && data?.links?.length > 0 && data?.nodes?.length > 0 && (
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div style={{ display: "flex", flex: 1 }}>
           <ForceGraph2D
-            width={window.innerWidth - 50}
-            height={window.innerHeight * 0.9}
+            width={window.innerWidth}
+            height={window.innerHeight}
             ref={fgRef}
             graphData={data}
             nodeRelSize={NODE_R}
+            nodeVal={(n) => n.val}
             autoPauseRedraw={false}
             nodeLabel={(node) => "Wallet n° " + node.id}
             linkLabel={(link) => {
@@ -262,23 +281,12 @@ function App() {
               highlightLinks.has(link.id) ? "orange" : "gray"
             }
             linkDirectionalParticleSpeed={(link) => link.value * 0.001}
-            // nodeCanvasObjectMode="replace"
-            nodeCanvasObject={paintNodes}
             onNodeHover={handleNodeHover}
             onLinkHover={handleLinkHover}
-            d3VelocityDecay={0.01}
             onNodeClick={handleClick}
-            // d3Force={(graphData) => {
-            //   return d3
-            //     .forceSimulation(graphData.nodes)
-            //     .force(
-            //       "link",
-            //       d3.forceLink(graphData.links).id((d) => d.id)
-            //     )
-            //     .force("charge", d3.forceManyBody().strength(-300))
-            //     .force("center", d3.forceCenter(0, 0))
-            //     .force("collide", d3.forceCollide(NODE_R * 2));
-            // }}
+            nodeCanvasObject={paintNodes}
+            cooldownTime={3000}
+            d3VelocityDecay={0.2}
             onNodeDragEnd={(node) => {
               node.fx = node.x;
               node.fy = node.y;
